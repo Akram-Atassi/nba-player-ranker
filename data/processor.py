@@ -4,7 +4,14 @@ No pandas required - pure Python.
 """
 
 from data.fetcher import load_stats
-from models.scoring import calculate_player_scores, rank_players, get_team_rankings, filter_players, compare_players
+from models.scoring import (
+    calculate_player_scores,
+    rank_players,
+    get_team_rankings,
+    filter_players,
+    compare_players,
+    normalize_position
+)
 
 
 def process_all_data():
@@ -12,7 +19,7 @@ def process_all_data():
     Load stats and calculate scores for all players.
 
     Returns:
-        List of player dicts with 'Score' field, sorted by score
+        List of player dicts with 'Score' field and normalized 'Position', sorted by score
     """
     print("[processor] Loading player stats...")
     df = load_stats()
@@ -24,7 +31,7 @@ def process_all_data():
 
     print(f"[processor] Processing {len(players)} players...")
 
-    # Calculate scores
+    # Calculate scores (also normalizes positions to G/F/C)
     scored_players = calculate_player_scores(players)
 
     # Rank by score
@@ -53,6 +60,7 @@ def get_all_teams(players_list):
 def get_all_positions(players_list):
     """
     Get list of all positions from player list.
+    Returns normalized positions: G (Guard), F (Forward), C (Center)
 
     Returns:
         Sorted list of positions
@@ -61,7 +69,7 @@ def get_all_positions(players_list):
     for player in players_list:
         pos = player.get('Position', '')
         if pos:
-            positions.add(pos)
+            positions.add(normalize_position(pos))
     return sorted(list(positions))
 
 
@@ -103,8 +111,8 @@ if __name__ == "__main__":
     print("\n=== Filter Examples ===")
 
     # Guards with score > 30
-    guards = filter_players(players, position='PG', min_score=30)
-    print(f"Point Guards with Score > 30: {len(guards)}")
+    guards = filter_players(players, position='G', min_score=30)
+    print(f"Guards with Score > 30: {len(guards)}")
     for p in guards[:3]:
         print(f"  - {p['Player']}: {p['Score']}")
 

@@ -20,7 +20,7 @@ print("[app] Loading NBA player data...")
 PLAYERS = process_all_data()
 TEAMS = get_all_teams(PLAYERS)
 POSITIONS = get_all_positions(PLAYERS)
-print(f"[app] Ready! {len(PLAYERS)} players, {len(TEAMS)} teams")
+print(f"[app] Ready! {len(PLAYERS)} players, {len(TEAMS)} teams, Positions: {POSITIONS}")
 
 
 @app.route('/')
@@ -40,6 +40,9 @@ def rankings():
     max_score = request.args.get('max_score', type=float)
     min_minutes = request.args.get('min_minutes', type=float)
 
+    # Debug: print filter values
+    print(f"[rankings] Filters: team={team}, position={position}, min_score={min_score}")
+
     # Apply filters
     filtered = filter_players(
         PLAYERS,
@@ -50,6 +53,8 @@ def rankings():
         min_minutes=min_minutes
     )
 
+    print(f"[rankings] Filtered {len(filtered)} players")
+
     return render_template(
         'rankings.html',
         players=filtered,
@@ -58,7 +63,8 @@ def rankings():
         selected_team=team,
         selected_position=position,
         min_score_filter=min_score,
-        max_score_filter=max_score
+        max_score_filter=max_score,
+        total_players=len(PLAYERS)
     )
 
 

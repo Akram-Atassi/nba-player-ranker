@@ -178,7 +178,7 @@ def filter_players(players_list, team=None, position=None, min_score=None, max_s
     Args:
         players_list: List of player dicts
         team: Filter by team (e.g., 'LAL')
-        position: Filter by position (e.g., 'PG')
+        position: Filter by position (e.g., 'G')
         min_score: Minimum score
         max_score: Maximum score
         min_minutes: Minimum minutes per game
