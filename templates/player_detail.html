@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.Player }} - NBA Player Ranker{% endblock %}
+
+{% block content %}
+<div class="player-detail">
+    <h2>{{ player.Player }}</h2>
+
+    <div class="player-card">
+        <div class="player-info">
+            <p><strong>Team:</strong> {{ player.Team }}</p>
+            <p><strong>Position:</strong> {{ player.Position }}</p>
+            <p><strong>Games:</strong> {{ player.Games }}</p>
+            <p><strong>Minutes/Game:</strong> {{ "%.1f"|format(player.Minutes) }}</p>
+        </div>
+
+        <div class="score-display">
+            <div class="score-value">{{ "%.1f"|format(player.Score) }}</div>
+            <div class="score-label">Overall Score</div>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f"|format(player.Points) }}</div>
+            <div class="stat-label">Points</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f"|format(player.Assists) }}</div>
+            <div class="stat-label">Assists</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f"|format(player.Rebounds) }}</div>
+            <div class="stat-label">Rebounds</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f"|format(player.Steals) }}</div>
+            <div class="stat-label">Steals</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f"|format(player.Blocks) }}</div>
+            <div class="stat-label">Blocks</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f%%"|format(player['FG%']) }}</div>
+            <div class="stat-label">FG%</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f%%"|format(player['3P%']) }}</div>
+            <div class="stat-label">3P%</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">{{ "%.1f%%"|format(player['FT%']) }}</div>
+            <div class="stat-label">FT%</div>
+        </div>
+    </div>
+
+    <a href="/rankings" class="btn btn-primary">Back to Rankings</a>
+</div>
+{% endblock %}

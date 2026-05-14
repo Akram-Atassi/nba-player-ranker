@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Rankings - NBA Player Ranker{% endblock %}
+
+{% block content %}
+<h2>Player Rankings</h2>
+
+<div class="filters">
+    <form method="GET" action="/rankings" class="filter-form">
+        <div class="filter-group">
+            <label for="team">Team:</label>
+            <select name="team" id="team">
+                <option value="">All Teams</option>
+                {% for team in teams %}
+                <option value="{{ team }}" {% if current_team == team %}selected{% endif %}>{{ team }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="position">Position:</label>
+            <select name="position" id="position">
+                <option value="">All Positions</option>
+                <option value="G" {% if current_position == 'G' %}selected{% endif %}>Guard (G)</option>
+                <option value="F" {% if current_position == 'F' %}selected{% endif %}>Forward (F)</option>
+                <option value="C" {% if current_position == 'C' %}selected{% endif %}>Center (C)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Filter</button>
+    </form>
+</div>
+
+<div class="table-container">
+    <table class="rankings-table">
+        <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Player</th>
+            <th>Position</th>
+            <th>Team</th>
+            <th>Score</th>
+            <th>Points</th>
+            <th>Assists</th>
+            <th>Rebounds</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for player in players %}
+        <tr class="score-{{ 'high' if player.Score >= 80 else 'mid' if player.Score >= 60 else 'low' }}">
+            <td>{{ player.Rank }}</td>
+            <td><a href="/player/{{ player.Player }}">{{ player.Player }}</a></td>
+            <td>{{ player.Position }}</td>
+            <td>{{ player.Team }}</td>
+            <td class="score-cell">{{ "%.1f"|format(player.Score) }}</td>
+            <td>{{ "%.1f"|format(player.Points) }}</td>
+            <td>{{ "%.1f"|format(player.Assists) }}</td>
+            <td>{{ "%.1f"|format(player.Rebounds) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if not players %}
+<p class="no-results">No players found with those filters.</p>
+{% endif %}
+{% endblock %}

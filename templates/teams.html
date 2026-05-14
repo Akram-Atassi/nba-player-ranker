@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title %}Teams - NBA Player Ranker{% endblock %}
+
+{% block content %}
+<h2>Team Rankings</h2>
+<p>Teams ranked by total player score (sum of all players)</p>
+
+<div class="table-container">
+    <table class="teams-table">
+        <thead>
+        <tr>
+            <th>Rank</th>
+            <th>Team</th>
+            <th>Total Score</th>
+            <th>Num Players</th>
+            <th>Avg Points</th>
+            <th>Avg Assists</th>
+            <th>Avg Rebounds</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for team in teams %}
+        <tr>
+            <td>{{ team.Team_Rank }}</td>
+            <td><strong>{{ team.Team }}</strong></td>
+            <td class="score-cell">{{ "%.1f"|format(team.Total_Score) }}</td>
+            <td>{{ team.Num_Players }}</td>
+            <td>{{ "%.1f"|format(team.Avg_Points) }}</td>
+            <td>{{ "%.1f"|format(team.Avg_Assists) }}</td>
+            <td>{{ "%.1f"|format(team.Avg_Rebounds) }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Home - NBA Player Ranker{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h2>NBA Player Rankings & Team Comparison</h2>
+    <p>Custom scoring formula based on position-specific metrics</p>
+    <div class="hero-buttons">
+        <a href="/rankings" class="btn btn-primary">View All Rankings</a>
+        <a href="/teams" class="btn btn-secondary">View Teams</a>
+        <a href="/compare" class="btn btn-secondary">Compare Players</a>
+    </div>
+</div>
+
+<div class="info-grid">
+    <div class="info-card">
+        <h3>Custom Scoring</h3>
+        <p>Position-specific formulas that account for playing time and role</p>
+    </div>
+    <div class="info-card">
+        <h3>Team Aggregation</h3>
+        <p>Teams ranked by sum of all player scores</p>
+    </div>
+    <div class="info-card">
+        <h3>Smart Filtering</h3>
+        <p>Filter by team, position, and score range</p>
+    </div>
+</div>
+{% endblock %}

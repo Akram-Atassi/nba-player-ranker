@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Players - NBA Player Ranker{% endblock %}
+
+{% block content %}
+<h2>Compare Players</h2>
+
+<form method="GET" action="/compare" class="compare-form">
+    <div class="form-group">
+        <label for="player1">Player 1:</label>
+        <input type="text" name="player1" id="player1" list="players" value="{{ player1 }}" placeholder="Enter player name">
+    </div>
+
+    <div class="form-group">
+        <label for="player2">Player 2:</label>
+        <input type="text" name="player2" id="player2" list="players" value="{{ player2 }}" placeholder="Enter player name">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Compare</button>
+</form>
+
+<datalist id="players">
+    {% for player in all_players %}
+    <option value="{{ player }}">
+        {% endfor %}
+</datalist>
+
+{% if comparison %}
+<div class="comparison-table">
+    <table>
+        <thead>
+        <tr>
+            <th>Stat</th>
+            <th>{{ comparison[0].Player }}</th>
+            <th>{{ comparison[1].Player }}</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td><strong>Score</strong></td>
+            <td class="{% if comparison[0].Score >= comparison[1].Score %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Score) }}</td>
+            <td class="{% if comparison[1].Score > comparison[0].Score %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Score) }}</td>
+        </tr>
+        <tr>
+            <td>Points</td>
+            <td class="{% if comparison[0].Points >= comparison[1].Points %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Points) }}</td>
+            <td class="{% if comparison[1].Points > comparison[0].Points %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Points) }}</td>
+        </tr>
+        <tr>
+            <td>Assists</td>
+            <td class="{% if comparison[0].Assists >= comparison[1].Assists %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Assists) }}</td>
+            <td class="{% if comparison[1].Assists > comparison[0].Assists %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Assists) }}</td>
+        </tr>
+        <tr>
+            <td>Rebounds</td>
+            <td class="{% if comparison[0].Rebounds >= comparison[1].Rebounds %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Rebounds) }}</td>
+            <td class="{% if comparison[1].Rebounds > comparison[0].Rebounds %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Rebounds) }}</td>
+        </tr>
+        <tr>
+            <td>Steals</td>
+            <td class="{% if comparison[0].Steals >= comparison[1].Steals %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Steals) }}</td>
+            <td class="{% if comparison[1].Steals > comparison[0].Steals %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Steals) }}</td>
+        </tr>
+        <tr>
+            <td>Blocks</td>
+            <td class="{% if comparison[0].Blocks >= comparison[1].Blocks %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Blocks) }}</td>
+            <td class="{% if comparison[1].Blocks > comparison[0].Blocks %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Blocks) }}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+{% elif player1 and player2 %}
+<p class="error">Players not found. Please check the names.</p>
+{% endif %}
+{% endblock %}
