@@ -6,7 +6,7 @@
   <component name="ChangeListManager">
     <list default="true" id="976337bb-4b9b-4ea6-938c-28b4333e6418" name="Changes" comment="removed all-players brancg">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data/fetcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/fetcher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/scoring.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/scoring.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,6 +58,7 @@
   "keyToString": {
     "DefaultHtmlFileTemplate": "HTML File",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.fetcher.executor": "Debug",
     "Python.scoring.executor": "Run",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -66,7 +67,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "All-Players-Patch",
+    "git-widget-placeholder": "Fix-scoring-patch",
     "git.auto.fetch.suggestion.counter": "2",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
@@ -178,7 +179,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778838803873</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Added new branch">
+      <option name="closed" value="true" />
+      <created>1778859547186</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1778859547186</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -186,6 +195,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="removed all-players brancg" />
-    <option name="LAST_COMMIT_MESSAGE" value="removed all-players brancg" />
+    <MESSAGE value="Added new branch" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added new branch" />
   </component>
 </project>

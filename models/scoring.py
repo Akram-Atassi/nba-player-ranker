@@ -110,7 +110,7 @@ def calculate_score(player):
         score = (
                 (points / 19) * 28 +
                 (rebounds / 9) * 28 +
-                (fg_pct / 54) * 18 +
+                (fg_pct / 54) * 8 +
                 (blocks / 1.2) * 15 +
                 (assists / 2.3) * 6 +
                 (steals / 0.75) * 5
