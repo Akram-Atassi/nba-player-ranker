@@ -80,31 +80,24 @@ def teams():
     return render_template('team_compare.html', teams=team_rankings)
 
 
-@app.route('/compare', methods=['GET', 'POST'])
+@app.route('/compare')
 def compare():
     """Compare two players"""
+    p1_name = request.args.get('player1', '').strip()
+    p2_name = request.args.get('player2', '').strip()
+
     comparison = None
-    player_names = []
+    if p1_name and p2_name:
+        comparison = compare_players(PLAYERS, p1_name, p2_name)
 
-    if request.method == 'POST':
-        p1 = request.form.get('player1', '').strip()
-        p2 = request.form.get('player2', '').strip()
-
-        if p1 and p2:
-            comparison = compare_players(PLAYERS, p1, p2)
-            player_names = [p1, p2]
-
-    # Get search results if query param exists
-    search_query = request.args.get('search', '').strip()
-    search_results = []
-    if search_query:
-        search_results = search_players(PLAYERS, search_query)[:20]
+    all_player_names = sorted(set(p['Player'] for p in PLAYERS))
 
     return render_template(
         'compare.html',
         comparison=comparison,
-        search_results=search_results,
-        player_names=player_names
+        player1=p1_name,
+        player2=p2_name,
+        all_players=all_player_names
     )
 
 

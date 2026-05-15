@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="976337bb-4b9b-4ea6-938c-28b4333e6418" name="Changes" comment="removed all-players brancg" />
+    <list default="true" id="976337bb-4b9b-4ea6-938c-28b4333e6418" name="Changes" comment="removed all-players brancg">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/compare.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/compare.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -64,7 +68,7 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "Change-bug-teamnames",
+    "git-widget-placeholder": "main",
     "git.auto.fetch.suggestion.counter": "2",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",

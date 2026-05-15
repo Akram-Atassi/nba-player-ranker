@@ -3,73 +3,231 @@
 {% block title %}Compare Players - NBA Player Ranker{% endblock %}
 
 {% block content %}
+<style>
+  .compare-form { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 2rem; }
+  .compare-form .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+  .compare-form label { font-weight: 600; font-size: 0.9rem; }
+  .compare-form input { padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; width: 220px; }
+  .btn-primary { padding: 0.55rem 1.4rem; background: #1a73e8; color: #fff; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
+  .btn-primary:hover { background: #1558b0; }
+
+  .winner-banner { border-radius: 10px; padding: 1.5rem 2rem; margin-bottom: 2rem; text-align: center; }
+  .winner-banner.p1-wins { background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 2px solid #4caf50; }
+  .winner-banner.p2-wins { background: linear-gradient(135deg, #e3f2fd, #bbdefb); border: 2px solid #2196f3; }
+  .winner-banner.tie { background: linear-gradient(135deg, #fff8e1, #ffecb3); border: 2px solid #ffc107; }
+  .winner-banner h3 { margin: 0 0 0.4rem; font-size: 1.6rem; }
+  .winner-banner p { margin: 0; font-size: 1rem; color: #444; }
+  .winner-name { font-size: 1.1rem; font-weight: 700; }
+
+  .comparison-table { overflow-x: auto; }
+  .comparison-table table { width: 100%; border-collapse: collapse; font-size: 0.97rem; }
+  .comparison-table th { padding: 0.7rem 1rem; text-align: center; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; background: #333; color: #fff; }
+  .comparison-table th:first-child { text-align: left; }
+  .comparison-table td { padding: 0.6rem 1rem; text-align: center; border-bottom: 1px solid #eee; }
+  .comparison-table td:first-child { text-align: left; font-weight: 500; color: #555; }
+  .comparison-table tr:nth-child(even) { background: #f9f9f9; }
+  .comparison-table tr:hover { background: #f0f4ff; }
+
+  .stat-win { font-weight: 700; color: #2e7d32; }
+  .stat-loss { color: #888; }
+  .stat-tie { color: #555; }
+
+  .score-row td { font-size: 1.1rem; }
+  .col-p1 { background: #e8f5e9 !important; }
+  .col-p2 { background: #e3f2fd !important; }
+
+  .error { color: #c62828; margin-top: 1rem; }
+</style>
+
 <h2>Compare Players</h2>
 
 <form method="GET" action="/compare" class="compare-form">
-    <div class="form-group">
-        <label for="player1">Player 1:</label>
-        <input type="text" name="player1" id="player1" list="players" value="{{ player1 }}" placeholder="Enter player name">
-    </div>
-
-    <div class="form-group">
-        <label for="player2">Player 2:</label>
-        <input type="text" name="player2" id="player2" list="players" value="{{ player2 }}" placeholder="Enter player name">
-    </div>
-
-    <button type="submit" class="btn btn-primary">Compare</button>
+  <div class="form-group">
+    <label for="player1">Player 1</label>
+    <input type="text" name="player1" id="player1" list="players-list"
+           value="{{ player1 or '' }}" placeholder="Enter player name" autocomplete="off">
+  </div>
+  <div class="form-group">
+    <label for="player2">Player 2</label>
+    <input type="text" name="player2" id="player2" list="players-list"
+           value="{{ player2 or '' }}" placeholder="Enter player name" autocomplete="off">
+  </div>
+  <button type="submit" class="btn-primary">Compare</button>
 </form>
 
-<datalist id="players">
-    {% for player in all_players %}
-    <option value="{{ player }}">
-        {% endfor %}
+<datalist id="players-list">
+  {% for name in all_players %}
+  <option value="{{ name }}">
+  {% endfor %}
 </datalist>
 
 {% if comparison %}
-<div class="comparison-table">
+  {% set p1 = comparison.player1 %}
+  {% set p2 = comparison.player2 %}
+  {% set winner = comparison.winner %}
+
+  {# ── Winner banner ── #}
+  <div class="winner-banner {% if winner == 'player1' %}p1-wins{% elif winner == 'player2' %}p2-wins{% else %}tie{% endif %}">
+    {% if winner == 'tie' %}
+      <h3>It's a Tie</h3>
+      <p>Both players scored <strong>{{ "%.2f"|format(p1.Score) }}</strong></p>
+    {% elif winner == 'player1' %}
+      <h3>&#127942; <span class="winner-name">{{ p1.Player }}</span> is the better player</h3>
+      <p>Final Score: <strong>{{ "%.2f"|format(p1.Score) }}</strong> vs {{ "%.2f"|format(p2.Score) }}</p>
+    {% else %}
+      <h3>&#127942; <span class="winner-name">{{ p2.Player }}</span> is the better player</h3>
+      <p>Final Score: <strong>{{ "%.2f"|format(p2.Score) }}</strong> vs {{ "%.2f"|format(p1.Score) }}</p>
+    {% endif %}
+  </div>
+
+  {# ── Stats table ── #}
+  <div class="comparison-table">
     <table>
-        <thead>
+      <thead>
         <tr>
-            <th>Stat</th>
-            <th>{{ comparison[0].Player }}</th>
-            <th>{{ comparison[1].Player }}</th>
+          <th>Stat</th>
+          <th class="{% if winner == 'player1' %}col-p1{% elif winner == 'player2' %}col-p2{% endif %}">
+            {{ p1.Player }}{% if winner == 'player1' %} &#127942;{% endif %}
+          </th>
+          <th class="{% if winner == 'player2' %}col-p2{% elif winner == 'player1' %}col-p1{% endif %}">
+            {{ p2.Player }}{% if winner == 'player2' %} &#127942;{% endif %}
+          </th>
         </tr>
-        </thead>
-        <tbody>
+      </thead>
+      <tbody>
+
+        {# Final Score #}
+        <tr class="score-row">
+          <td><strong>Final Score</strong></td>
+          <td class="{% if p1.Score > p2.Score %}stat-win{% elif p1.Score < p2.Score %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.2f"|format(p1.Score) }}
+          </td>
+          <td class="{% if p2.Score > p1.Score %}stat-win{% elif p2.Score < p1.Score %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.2f"|format(p2.Score) }}
+          </td>
+        </tr>
+
+        {# Points #}
         <tr>
-            <td><strong>Score</strong></td>
-            <td class="{% if comparison[0].Score >= comparison[1].Score %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Score) }}</td>
-            <td class="{% if comparison[1].Score > comparison[0].Score %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Score) }}</td>
+          <td>Points per Game</td>
+          <td class="{% if p1.Points > p2.Points %}stat-win{% elif p1.Points < p2.Points %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p1.Points) }}
+          </td>
+          <td class="{% if p2.Points > p1.Points %}stat-win{% elif p2.Points < p1.Points %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p2.Points) }}
+          </td>
         </tr>
+
+        {# Rebounds #}
         <tr>
-            <td>Points</td>
-            <td class="{% if comparison[0].Points >= comparison[1].Points %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Points) }}</td>
-            <td class="{% if comparison[1].Points > comparison[0].Points %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Points) }}</td>
+          <td>Rebounds per Game</td>
+          <td class="{% if p1.Rebounds > p2.Rebounds %}stat-win{% elif p1.Rebounds < p2.Rebounds %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p1.Rebounds) }}
+          </td>
+          <td class="{% if p2.Rebounds > p1.Rebounds %}stat-win{% elif p2.Rebounds < p1.Rebounds %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p2.Rebounds) }}
+          </td>
         </tr>
+
+        {# Assists #}
         <tr>
-            <td>Assists</td>
-            <td class="{% if comparison[0].Assists >= comparison[1].Assists %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Assists) }}</td>
-            <td class="{% if comparison[1].Assists > comparison[0].Assists %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Assists) }}</td>
+          <td>Assists per Game</td>
+          <td class="{% if p1.Assists > p2.Assists %}stat-win{% elif p1.Assists < p2.Assists %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p1.Assists) }}
+          </td>
+          <td class="{% if p2.Assists > p1.Assists %}stat-win{% elif p2.Assists < p1.Assists %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p2.Assists) }}
+          </td>
         </tr>
+
+        {# Steals #}
         <tr>
-            <td>Rebounds</td>
-            <td class="{% if comparison[0].Rebounds >= comparison[1].Rebounds %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Rebounds) }}</td>
-            <td class="{% if comparison[1].Rebounds > comparison[0].Rebounds %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Rebounds) }}</td>
+          <td>Steals per Game</td>
+          <td class="{% if p1.Steals > p2.Steals %}stat-win{% elif p1.Steals < p2.Steals %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.2f"|format(p1.Steals) }}
+          </td>
+          <td class="{% if p2.Steals > p1.Steals %}stat-win{% elif p2.Steals < p1.Steals %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.2f"|format(p2.Steals) }}
+          </td>
         </tr>
+
+        {# Blocks #}
         <tr>
-            <td>Steals</td>
-            <td class="{% if comparison[0].Steals >= comparison[1].Steals %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Steals) }}</td>
-            <td class="{% if comparison[1].Steals > comparison[0].Steals %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Steals) }}</td>
+          <td>Blocks per Game</td>
+          <td class="{% if p1.Blocks > p2.Blocks %}stat-win{% elif p1.Blocks < p2.Blocks %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.2f"|format(p1.Blocks) }}
+          </td>
+          <td class="{% if p2.Blocks > p1.Blocks %}stat-win{% elif p2.Blocks < p1.Blocks %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.2f"|format(p2.Blocks) }}
+          </td>
         </tr>
+
+        {# FG% #}
         <tr>
-            <td>Blocks</td>
-            <td class="{% if comparison[0].Blocks >= comparison[1].Blocks %}winner{% endif %}">{{ "%.1f"|format(comparison[0].Blocks) }}</td>
-            <td class="{% if comparison[1].Blocks > comparison[0].Blocks %}winner{% endif %}">{{ "%.1f"|format(comparison[1].Blocks) }}</td>
+          <td>Field Goal %</td>
+          {% set fg1 = p1['FG%'] * 100 %}
+          {% set fg2 = p2['FG%'] * 100 %}
+          <td class="{% if fg1 > fg2 %}stat-win{% elif fg1 < fg2 %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(fg1) }}%
+          </td>
+          <td class="{% if fg2 > fg1 %}stat-win{% elif fg2 < fg1 %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(fg2) }}%
+          </td>
         </tr>
-        </tbody>
+
+        {# 3P% #}
+        <tr>
+          <td>3-Point %</td>
+          {% set tp1 = p1['3P%'] * 100 %}
+          {% set tp2 = p2['3P%'] * 100 %}
+          <td class="{% if tp1 > tp2 %}stat-win{% elif tp1 < tp2 %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(tp1) }}%
+          </td>
+          <td class="{% if tp2 > tp1 %}stat-win{% elif tp2 < tp1 %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(tp2) }}%
+          </td>
+        </tr>
+
+        {# FT% #}
+        <tr>
+          <td>Free Throw %</td>
+          {% set ft1 = p1['FT%'] * 100 %}
+          {% set ft2 = p2['FT%'] * 100 %}
+          <td class="{% if ft1 > ft2 %}stat-win{% elif ft1 < ft2 %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(ft1) }}%
+          </td>
+          <td class="{% if ft2 > ft1 %}stat-win{% elif ft2 < ft1 %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(ft2) }}%
+          </td>
+        </tr>
+
+        {# Games #}
+        <tr>
+          <td>Games Played</td>
+          <td class="{% if p1.Games > p2.Games %}stat-win{% elif p1.Games < p2.Games %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ p1.Games | int }}
+          </td>
+          <td class="{% if p2.Games > p1.Games %}stat-win{% elif p2.Games < p1.Games %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ p2.Games | int }}
+          </td>
+        </tr>
+
+        {# Minutes #}
+        <tr>
+          <td>Minutes per Game</td>
+          <td class="{% if p1.Minutes > p2.Minutes %}stat-win{% elif p1.Minutes < p2.Minutes %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p1.Minutes) }}
+          </td>
+          <td class="{% if p2.Minutes > p1.Minutes %}stat-win{% elif p2.Minutes < p1.Minutes %}stat-loss{% else %}stat-tie{% endif %}">
+            {{ "%.1f"|format(p2.Minutes) }}
+          </td>
+        </tr>
+
+      </tbody>
     </table>
-</div>
+  </div>
+
 {% elif player1 and player2 %}
-<p class="error">Players not found. Please check the names.</p>
+  <p class="error">One or both players not found. Check that the name matches exactly.</p>
 {% endif %}
 {% endblock %}
