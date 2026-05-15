@@ -743,6 +743,119 @@ PLAYERS_DATA = [
     ('Chucky Hepburn', 'TOR', 'PG', 2, 6.5, 0.0, 1.0, 0.5, 0.5, 0.0, 0.0, 0.0, 0.0),
 ]
 
+# Per-game 3PA lookup for centers (used in the 3P volume adjustment formula).
+# Non-center players default to 0.0 (3PA is not used in their scoring formula).
+CENTER_3PA = {
+    # Elite/starter centers
+    'Nikola Jokić': 4.54,
+    'Victor Wembanyama': 2.5,
+    'Karl-Anthony Towns': 5.0,
+    'Bam Adebayo': 0.5,
+    'Alperen Şengün': 0.5,
+    'Jalen Duren': 0.03,
+    'Joel Embiid': 1.5,
+    'Nikola Vučević': 2.5,
+    'Derik Queen': 0.5,
+    'Donovan Clingan': 0.5,
+    'Jaren Jackson Jr.': 3.0,
+    'Wendell Carter Jr.': 1.5,
+    'Maxime Raynaud': 1.5,
+    'Jarrett Allen': 0.2,
+    "Kel'el Ware": 1.0,
+    'Myles Turner': 3.5,
+    'Rudy Gobert': 0.0,
+    'Nic Claxton': 0.3,
+    'Deandre Ayton': 0.0,
+    'Sandro Mamukelashvili': 2.0,
+    'Kyle Filipowski': 1.5,
+    'Jay Huff': 1.0,
+    'Alex Sarr': 2.0,
+    'Neemias Queta': 0.3,
+    'Jonas Valančiūnas': 1.0,
+    'Onyeka Okongwu': 1.0,
+    'Precious Achiuwa': 0.5,
+    'Jock Landale': 1.5,
+    'Ivica Zubac': 0.0,
+    'Mark Williams': 0.1,
+    'Isaiah Hartenstein': 0.0,
+    'Ousmane Dieng': 2.0,
+    'Daniel Gafford': 0.0,
+    'Ryan Kalkbrenner': 0.0,
+    'Jaxson Hayes': 0.1,
+    'Jakob Poeltl': 0.0,
+    'Micah Potter': 2.0,
+    'Jusuf Nurkić': 1.0,
+    'Luke Kornet': 0.0,
+    'Tristan Vukcevic': 1.5,
+    'Isaiah Jackson': 0.0,
+    'Jalen Smith': 1.5,
+    "Day'Ron Sharpe": 0.5,
+    'Domantas Sabonis': 0.5,
+    'Yves Missi': 0.0,
+    'Goga Bitadze': 0.5,
+    'Guerschon Yabusele': 2.0,
+    'Al Horford': 2.5,
+    'Thomas Bryant': 0.5,
+    'Adem Bona': 0.3,
+    'Mitchell Robinson': 0.0,
+    'Jericho Sims': 0.0,
+    'Brook Lopez': 3.0,
+    'Naz Reid': 3.0,
+    'Moussa Diabaté': 0.03,
+    'Clint Capela': 0.1,
+    'Nick Richards': 0.3,
+    'Robert Williams': 0.5,
+    'Andre Drummond': 0.5,
+    'Kristaps Porziņģis': 3.5,
+    'Luka Garza': 1.5,
+    'Paul Reed': 1.0,
+    'Moritz Wagner': 1.5,
+    'Branden Carlson': 1.5,
+    'Dylan Cardwell': 0.1,
+    'Drew Eubanks': 0.3,
+    'Oscar Tshiebwe': 0.0,
+    'Dwight Powell': 1.0,
+    'Steven Adams': 0.0,
+    'Trayce Jackson-Davis': 0.1,
+    'Yanic Konan Niederhäuser': 0.3,
+    'Moussa Cisse': 0.0,
+    'Tony Bradley': 0.1,
+    'Zach Edey': 0.3,
+    'Khaman Maluach': 0.3,
+    'Kelly Olynyk': 1.5,
+    'Ariel Hukporti': 0.3,
+    'Isaiah Stewart': 1.0,
+    'Zach Collins': 2.0,
+    'Yang Hansen': 0.5,
+    'Duop Reath': 1.0,
+    'Lachlan Olbrich': 0.3,
+    'PJ Hall': 0.5,
+    'Charles Bassey': 0.0,
+    'Christian Koloko': 0.3,
+    'Walker Kessler': 0.3,
+    'Kevon Looney': 0.3,
+    'DeAndre Jordan': 0.0,
+    'Xavier Tillman Sr.': 0.3,
+    'Taj Gibson': 0.1,
+    'Omer Yurtseven': 0.0,
+    'Mason Plumlee': 0.0,
+    'Dereck Lively II': 0.0,
+    'Lawson Lovering': 0.0,
+    'Olivier Sarr': 0.5,
+    'Rocco Zikarsky': 0.0,
+    'Trey Jemison': 0.0,
+    'James Wiseman': 0.0,
+    'Hunter Dickinson': 0.0,
+    'Mo Bamba': 0.0,
+    'Johni Broome': 0.0,
+    'Vladislav Goldin': 0.0,
+    'Orlando Robinson': 0.3,
+    'Colin Castleton': 0.0,
+    'Dario Šarić': 0.5,
+    "N'Faly Dante": 0.0,
+    'Bismack Biyombo': 0.0,
+}
+
 
 class DataFrame:
     """Simple DataFrame-like class to mimic pandas behavior."""
@@ -775,7 +888,7 @@ class DataFrame:
     def to_csv(self, filepath):
         """Write to CSV file."""
         with open(filepath, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=self.columns)
+            writer = csv.DictWriter(f, fieldnames=self.columns, extrasaction='ignore')
             writer.writeheader()
             writer.writerows(self.data)
 
@@ -803,6 +916,16 @@ class DataFrame:
         return ""
 
 
+def _populate_3pa(df):
+    """Add 3PA (per-game three-point attempts) to each player dict from the lookup.
+
+    Centers not in CENTER_3PA default to 0.0. Non-centers always get 0.0
+    because 3PA is only used in the center scoring formula.
+    """
+    for player in df.data:
+        player['3PA'] = CENTER_3PA.get(player.get('Player', ''), 0.0)
+
+
 def load_stats():
     """Load stats from cache or create from hardcoded data."""
     print(f"[{datetime.now()}] Loading NBA stats...")
@@ -818,27 +941,26 @@ def load_stats():
         with open(CACHE_FILE, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Convert numeric strings to floats
                 numeric_cols = ['Games', 'Minutes', 'Points', 'Assists', 'Rebounds',
                                 'Steals', 'Blocks', 'FG%', '3P%', 'FT%']
                 for col in numeric_cols:
                     row[col] = float(row[col])
                 df.data.append(row)
 
+        _populate_3pa(df)
         print(f"Loaded {len(df)} players from cache")
         return df
 
     print(f"Creating DataFrame from Basketball-Reference data...")
 
-    # Create DataFrame from hardcoded data
     df = DataFrame(PLAYERS_DATA, [
         'Player', 'Team', 'Position', 'Games', 'Minutes', 'Points', 'Assists',
         'Rebounds', 'Steals', 'Blocks', 'FG%', '3P%', 'FT%'
     ])
 
+    _populate_3pa(df)
     print(f"Loaded {len(df)} players")
 
-    # Save to cache
     df.to_csv(CACHE_FILE)
     print(f"[{datetime.now()}] Saved {len(df)} players to {CACHE_FILE}")
 

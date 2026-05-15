@@ -55,6 +55,7 @@
   "keyToString": {
     "DefaultHtmlFileTemplate": "HTML File",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "Python.fetcher.executor": "Debug",
     "Python.scoring.executor": "Run",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
@@ -175,7 +176,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778838803873</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Added new branch">
+      <option name="closed" value="true" />
+      <created>1778859547186</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1778859547186</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -183,6 +192,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="removed all-players brancg" />
-    <option name="LAST_COMMIT_MESSAGE" value="removed all-players brancg" />
+    <MESSAGE value="Added new branch" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added new branch" />
   </component>
 </project>
