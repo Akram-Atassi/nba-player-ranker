@@ -49,12 +49,13 @@ def calculate_player_scores(players_list):
 
 def calculate_score(player):
     """
-    Calculate a single player's score based on position (HARSH MODE).
+    Calculate a single player's score based on position.
 
-    Position-specific weights with stricter normalization:
+    Position-specific weights:
     - G (Guards): Points 35%, Assists 25%, FG% 10%, 3P% 10%, Steals 10%
     - F (Forwards): Points 30%, Rebounds 25%, FG% 20%, Assists 10%, Steals 8%, Blocks 7%
     - C (Centers): Points 28%, Rebounds 28%, FG% 18%, Blocks 15%, Assists 6%, Steals 5%
+      Centers also apply a 3P volume adjustment and a low-scoring penalty.
 
     Also includes volume penalties for low games/minutes.
     """
@@ -70,60 +71,78 @@ def calculate_score(player):
     games = float(player.get('Games', 70))
     minutes = float(player.get('Minutes', 30))
 
-    # Base score calculation by position (STRICTER NORMALIZATION)
     if position == 'G':
-        # Guard formula - stricter divisors
         score = (
-                (points / 28) * 35 +           # 35% weight (28 PPG is elite for guards)
-                (assists / 6) * 25 +           # 25% weight (6 APG is solid)
-                (fg_pct / 48) * 10 +           # 10% weight (48% is elite FG)
-                (three_pct / 38) * 10 +        # 10% weight (38% is good 3P)
-                (steals / 1.8) * 10            # 10% weight (1.8 SPG is solid)
+                (points / 28) * 35 +
+                (assists / 6) * 25 +
+                (fg_pct / 48) * 10 +
+                (three_pct / 38) * 10 +
+                (steals / 1.8) * 10
         )
     elif position == 'F':
-        # Forward formula - stricter divisors
         score = (
-                (points / 20) * 30 +           # 30% weight (20 PPG is solid for forwards)
-                (rebounds / 5.5) * 25 +        # 25% weight (5.5 RPG is solid)
-                (fg_pct / 48) * 20 +           # 20% weight (48% is good)
-                (assists / 3.5) * 10 +         # 10% weight (3.5 APG is solid)
-                (steals / 1.1) * 8 +           # 8% weight (1.1 SPG is good)
-                (blocks / 0.6) * 7             # 7% weight (0.6 BPG is solid)
+                (points / 20) * 30 +
+                (rebounds / 5.5) * 25 +
+                (fg_pct / 48) * 20 +
+                (assists / 3.5) * 10 +
+                (steals / 1.1) * 8 +
+                (blocks / 0.6) * 7
         )
     elif position == 'C':
-        # Center formula - stricter divisors
+        three_pa = float(player.get('3PA', 0.0))  # per-game 3P attempts
+
+        # Adjusted 3P% based on volume (penalizes centers who rarely attempt 3s)
+        if three_pa < 1.0:
+            adjusted_three_pct = three_pct * (three_pa / 1.5)
+        else:
+            adjusted_three_pct = three_pct
+
+        # 3P modifier: centers with negligible 3P volume are penalized
+        if adjusted_three_pct == 0.0:
+            three_pt_modifier = 0.82
+        elif adjusted_three_pct < 15:
+            three_pt_modifier = 0.88
+        elif adjusted_three_pct < 20:
+            three_pt_modifier = 0.92
+        else:
+            three_pt_modifier = 1.0
+
         score = (
-                (points / 19) * 28 +           # 28% weight (19 PPG is solid for centers)
-                (rebounds / 9) * 28 +          # 28% weight (9 RPG is solid)
-                (fg_pct / 54) * 18 +           # 18% weight (54% is elite for centers)
-                (blocks / 1.2) * 15 +          # 15% weight (1.2 BPG is good)
-                (assists / 2.3) * 6 +          # 6% weight (2.3 APG is decent)
-                (steals / 0.75) * 5            # 5% weight (0.75 SPG is decent)
+                (points / 19) * 28 +
+                (rebounds / 9) * 28 +
+                (fg_pct / 54) * 18 +
+                (blocks / 1.2) * 15 +
+                (assists / 2.3) * 6 +
+                (steals / 0.75) * 5
         )
+
+        score *= three_pt_modifier
+
+        # Low-scoring center penalty
+        if points < 12:
+            score *= 0.75
+        elif points < 15:
+            score *= 0.85
     else:
-        # Default to guard if position unknown
         score = (points / 28) * 50 + (assists / 6) * 50
 
-    # VOLUME PENALTIES (replaces starter bonus)
-    # Penalize players with low games or low minutes
+    # Games played penalty
     if games < 50:
-        score *= 0.75  # 25% penalty for limited games
+        score *= 0.75
     elif games < 60:
-        score *= 0.85  # 15% penalty for lower game count
+        score *= 0.85
 
+    # Minutes per game penalty
     if minutes < 20:
-        score *= 0.80  # 20% penalty for bench players
+        score *= 0.80
     elif minutes < 25:
-        score *= 0.90  # 10% penalty for limited minutes
+        score *= 0.90
 
-    # Slight volume bonus for high-usage players (not a big boost)
+    # High volume bonus (must meet both thresholds)
     if games >= 70 and minutes >= 32:
-        score *= 1.05  # Only 5% bonus (was 10%)
+        score *= 1.05
 
-    # Cap score at 100
-    score = min(score, 100)
-    score = max(score, 0)
-
+    score = min(100, max(0, score))
     return round(score, 2)
 
 
