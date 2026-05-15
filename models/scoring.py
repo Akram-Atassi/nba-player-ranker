@@ -127,10 +127,14 @@ def calculate_score(player):
         score = (points / 28) * 50 + (assists / 6) * 50
 
     # Games played penalty
-    if games < 50:
-        score *= 0.75
+    if games < 15:
+        score *= 0.50
+    elif games < 30:
+        score *= 0.70
+    elif games < 50:
+        score *= 0.82
     elif games < 60:
-        score *= 0.85
+        score *= 0.90
 
     # Minutes per game penalty
     if minutes < 20:
