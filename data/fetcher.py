@@ -845,53 +845,100 @@ class DataFrame:
 
 
 def _populate_3pa(df):
-    """Add 3PA (per-game three-point attempts) to each player dict from the lookup.
-
-    Centers not in CENTER_3PA default to 0.0. Non-centers always get 0.0
-    because 3PA is only used in the center scoring formula.
-    """
+    """Fallback: populate 3PA from CENTER_3PA lookup (used only with hardcoded data)."""
     for player in df.data:
         player['3PA'] = CENTER_3PA.get(player.get('Player', ''), 0.0)
 
 
+def _safe_float(value, default=0.0):
+    """Parse a float, returning default for empty or invalid values."""
+    try:
+        v = str(value).strip()
+        return float(v) if v else default
+    except (ValueError, TypeError):
+        return default
+
+
+def _bref_row_to_pergame(row):
+    """Convert one Basketball-Reference total-stats CSV row to a per-game stats dict."""
+    g = max(1.0, _safe_float(row.get('G', 1)))
+    return {
+        'Player':   row.get('Player', '').strip(),
+        'Team':     row.get('Team', 'UNK').strip(),
+        'Position': row.get('Pos', 'G').strip(),
+        'Games':    g,
+        'Minutes':  round(_safe_float(row.get('MP')) / g, 2),
+        'Points':   round(_safe_float(row.get('PTS')) / g, 2),
+        'Assists':  round(_safe_float(row.get('AST')) / g, 2),
+        'Rebounds': round(_safe_float(row.get('TRB')) / g, 2),
+        'Steals':   round(_safe_float(row.get('STL')) / g, 2),
+        'Blocks':   round(_safe_float(row.get('BLK')) / g, 2),
+        'FG%':      _safe_float(row.get('FG%'), 0.450),
+        '3P%':      _safe_float(row.get('3P%'), 0.350),
+        'FT%':      _safe_float(row.get('FT%'), 0.750),
+        '3PA':      round(_safe_float(row.get('3PA')) / g, 2),
+    }
+
+
 def load_stats():
-    """Load stats from cache or create from hardcoded data."""
+    """
+    Load and consolidate player stats from Basketball-Reference CSV.
+
+    Multi-team players (2TM / 3TM / 4TM) are collapsed to one entry:
+      - Stats come from the combined XTM row (season totals ÷ G).
+      - Team is the player's most recent team (last individual-team row in the CSV).
+
+    Falls back to the hardcoded PLAYERS_DATA list if the CSV is missing.
+    """
+    MULTI_TEAM = {'2TM', '3TM', '4TM'}
     print(f"[{datetime.now()}] Loading NBA stats...")
 
-    # Try to load from cache first
     if os.path.exists(CACHE_FILE):
-        print(f"Loading from cache: {CACHE_FILE}")
-        df = DataFrame([], [
-            'Player', 'Team', 'Position', 'Games', 'Minutes', 'Points', 'Assists',
-            'Rebounds', 'Steals', 'Blocks', 'FG%', '3P%', 'FT%'
-        ])
+        print(f"Loading from B-Ref CSV: {CACHE_FILE}")
+        rows_by_player = {}
 
         with open(CACHE_FILE, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                numeric_cols = ['Games', 'Minutes', 'Points', 'Assists', 'Rebounds',
-                                'Steals', 'Blocks', 'FG%', '3P%', 'FT%']
-                for col in numeric_cols:
-                    row[col] = float(row[col])
-                df.data.append(row)
+                # Skip repeated header rows that B-Ref inserts mid-table
+                if row.get('Rk', '').strip() == 'Rk':
+                    continue
+                player = row.get('Player', '').strip()
+                if not player:
+                    continue
+                rows_by_player.setdefault(player, []).append(dict(row))
 
-        _populate_3pa(df)
-        print(f"Loaded {len(df)} players from cache")
+        cols = ['Player', 'Team', 'Position', 'Games', 'Minutes', 'Points', 'Assists',
+                'Rebounds', 'Steals', 'Blocks', 'FG%', '3P%', 'FT%', '3PA']
+        df = DataFrame([], cols)
+
+        for rows in rows_by_player.values():
+            xTM_rows    = [r for r in rows if r.get('Team', '').strip() in MULTI_TEAM]
+            indiv_rows  = [r for r in rows if r.get('Team', '').strip() not in MULTI_TEAM]
+
+            if xTM_rows:
+                # Multi-team player: use combined stats, assign to most recent team
+                pg = _bref_row_to_pergame(xTM_rows[0])
+                pg['Team'] = indiv_rows[-1]['Team'].strip() if indiv_rows else 'UNK'
+                # Games actually played for current team (not full-season total)
+                pg['Games_For_Team'] = _safe_float(indiv_rows[-1].get('G', pg['Games'])) if indiv_rows else pg['Games']
+            else:
+                pg = _bref_row_to_pergame(rows[0])
+                pg['Games_For_Team'] = pg['Games']
+
+            df.data.append(pg)
+
+        print(f"Loaded {len(df)} players from B-Ref CSV (multi-team players consolidated)")
         return df
 
-    print(f"Creating DataFrame from Basketball-Reference data...")
-
+    # Fallback: hardcoded per-game data
+    print("B-Ref CSV not found — loading from hardcoded data...")
     df = DataFrame(PLAYERS_DATA, [
         'Player', 'Team', 'Position', 'Games', 'Minutes', 'Points', 'Assists',
         'Rebounds', 'Steals', 'Blocks', 'FG%', '3P%', 'FT%'
     ])
-
     _populate_3pa(df)
-    print(f"Loaded {len(df)} players")
-
-    df.to_csv(CACHE_FILE)
-    print(f"[{datetime.now()}] Saved {len(df)} players to {CACHE_FILE}")
-
+    print(f"Loaded {len(df)} players from hardcoded data")
     return df
 
 

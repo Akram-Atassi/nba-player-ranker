@@ -53,15 +53,51 @@ def _build_team_stats(team_code, players):
         return None
 
     n = len(players)
-    total_score = sum(p.get('Score', 0) for p in players)
     structure = NBA_STRUCTURE.get(team_code, {'conference': 'Unknown', 'division': 'Unknown'})
     top_player = max(players, key=lambda p: p.get('Score', 0))
+
+    # Only include players who logged meaningful minutes (≥12 mpg, ≥10 team games).
+    # Deep bench players with garbage-time stats skew the weighted average without
+    # contributing to wins, so we exclude them from the quality calculation.
+    rotation = [
+        p for p in players
+        if p.get('Minutes', 0) >= 12 and p.get('Games_For_Team', p.get('Games', 0)) >= 10
+    ]
+    if not rotation:
+        rotation = players  # fallback if entire roster is filtered
+
+    # Weight each player by minutes × games played for this team so that:
+    # - starters who log 35 min over 80 games dominate the team score
+    # - bench players and mid-season trades contribute proportionally less
+    def _weight(p):
+        g = p.get('Games_For_Team', p.get('Games', 1))
+        return max(0.1, g * p.get('Minutes', 1))
+
+    # Cap to top 10 by weight so teams with large rosters aren't penalized relative
+    # to teams with leaner rosters — every team is judged on its best 10 contributors.
+    rotation_sorted = sorted(rotation, key=_weight, reverse=True)[:10]
+
+    weights = [_weight(p) for p in rotation_sorted]
+    total_weight = sum(weights)
+    raw_avg = (
+        sum(p.get('Score', 0) * w for p, w in zip(rotation_sorted, weights)) / total_weight
+    ) if total_weight > 0 else 0
+
+    # Star amplification: MVP-caliber players win more games than the weighted
+    # average suggests. Add a bonus proportional to how much the star exceeds the
+    # team average, capped at +12 points. This helps teams like OKC (SGA) and CLE
+    # (Mitchell) which are otherwise underrated because of defensive-only depth players.
+    top_score = max(p.get('Score', 0) for p in rotation_sorted) if rotation_sorted else 0
+    star_gap = max(0.0, top_score - raw_avg)
+    star_bonus = min(12.0, star_gap * 0.28) if top_score >= 88 else 0.0
+
+    total_score = round(raw_avg + star_bonus, 2)
 
     return {
         'Team': team_code,
         'Conference': structure['conference'],
         'Division': structure['division'],
-        'Total_Score': round(total_score, 2),
+        'Total_Score': total_score,
         'Num_Players': n,
         'Avg_Points': round(sum(p.get('Points', 0) for p in players) / n, 1),
         'Avg_Assists': round(sum(p.get('Assists', 0) for p in players) / n, 1),
@@ -145,21 +181,25 @@ def calculate_score(player):
     minutes = float(player.get('Minutes', 30))
 
     if position == 'G':
+        # Steals raised to 15% to give credit to defensive-minded guards (e.g. elite defenders)
         score = (
-                (points / 28) * 35 +
-                (assists / 6) * 25 +
+                (points / 28) * 32 +
+                (assists / 6) * 23 +
                 (fg_pct / 48) * 10 +
                 (three_pct / 38) * 10 +
-                (steals / 1.8) * 10
+                (steals / 1.5) * 15 +
+                (rebounds / 4.0) * 10
         )
     elif position == 'F':
+        # Blocks raised to 10%, steals to 10%; rebounds reference raised to 7 to dampen
+        # extreme rebound totals and better balance the position formula
         score = (
-                (points / 20) * 30 +
-                (rebounds / 5.5) * 25 +
-                (fg_pct / 48) * 20 +
+                (points / 20) * 28 +
+                (rebounds / 7.0) * 22 +
+                (fg_pct / 48) * 15 +
                 (assists / 3.5) * 10 +
-                (steals / 1.1) * 8 +
-                (blocks / 0.6) * 7
+                (steals / 1.0) * 13 +
+                (blocks / 0.8) * 12
         )
     elif position == 'C':
         three_pa = float(player.get('3PA', 0.0))  # per-game 3P attempts
@@ -180,13 +220,15 @@ def calculate_score(player):
         else:
             three_pt_modifier = 1.0
 
+        # Blocks raised to 20% to reward shot-blockers more
         score = (
-                (points / 19) * 28 +
-                (rebounds / 9) * 28 +
-                (fg_pct / 54) * 8 +
-                (blocks / 1.2) * 15 +
-                (assists / 2.3) * 6 +
-                (steals / 0.75) * 5
+                (points / 19) * 25 +
+                (rebounds / 9) * 25 +
+                (fg_pct / 54) * 10 +
+                (blocks / 1.2) * 20 +
+                (assists / 2.3) * 8 +
+                (steals / 0.75) * 7 +
+                (rebounds / 9) * 5
         )
 
         score *= three_pt_modifier
@@ -325,7 +367,7 @@ def compare_conferences(players_list):
     def _conf_stats(teams, name):
         return {
             'Conference': name,
-            'Total_Score': round(sum(t['Total_Score'] for t in teams), 2),
+            'Total_Score': round(sum(t['Total_Score'] for t in teams) / len(teams), 2) if teams else 0,
             'Num_Teams': len(teams),
             'Avg_Points': _agg(teams, 'Avg_Points'),
             'Avg_Assists': _agg(teams, 'Avg_Assists'),
@@ -396,7 +438,7 @@ def compare_divisions(players_list, div1_name, div2_name):
         return {
             'Division': name,
             'Conference': teams[0]['Conference'] if teams else '',
-            'Total_Score': round(sum(t['Total_Score'] for t in teams), 2),
+            'Total_Score': round(sum(t['Total_Score'] for t in teams) / n, 2) if n else 0,
             'Num_Teams': n,
             'Avg_Points': round(sum(t['Avg_Points'] for t in teams) / n, 1),
             'Avg_Assists': round(sum(t['Avg_Assists'] for t in teams) / n, 1),

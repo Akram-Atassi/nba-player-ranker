@@ -109,13 +109,13 @@
    VIEW: ALL TEAMS
    ════════════════════════════════════════════════════════ #}
 {% if view == 'all' %}
-<p class="hint">All 30 teams ranked by total player score (sum of every rostered player's score).</p>
+<p class="hint">All 30 teams ranked by quality score — a minutes-weighted average of player scores that rewards elite starters over deep benches.</p>
 <div class="table-container">
   <table class="teams-table">
     <thead>
       <tr>
         <th>Rank</th><th>Team</th><th>Conference</th><th>Division</th>
-        <th>Total Score</th><th>Players</th>
+        <th>Quality Score</th><th>Players</th>
         <th>Avg PPG</th><th>Avg APG</th><th>Avg RPG</th>
         <th>Avg FG%</th><th>Top Player</th>
       </tr>
@@ -148,7 +148,7 @@
    VIEW: BY CONFERENCE
    ════════════════════════════════════════════════════════ #}
 {% elif view == 'conference' %}
-<p class="hint">Teams ranked within each conference by total player score.</p>
+<p class="hint">Teams ranked within each conference by quality score (minutes-weighted average).</p>
 
 {% for conf_name, conf_teams in [('East', conf_rankings.East), ('West', conf_rankings.West)] %}
 <div class="section-header {{ conf_name | lower }}">
@@ -159,7 +159,7 @@
     <thead>
       <tr>
         <th>#</th><th>Team</th><th>Division</th>
-        <th>Total Score</th><th>Players</th>
+        <th>Quality Score</th><th>Players</th>
         <th>Avg PPG</th><th>Avg APG</th><th>Avg RPG</th>
         <th>Avg FG%</th><th>Top Player</th>
       </tr>
@@ -188,7 +188,7 @@
    VIEW: BY DIVISION
    ════════════════════════════════════════════════════════ #}
 {% elif view == 'division' %}
-<p class="hint">Teams ranked within each division by total player score.</p>
+<p class="hint">Teams ranked within each division by quality score (minutes-weighted average).</p>
 
 {% for div_name in ['Atlantic','Central','Southeast','Northwest','Pacific','Southwest'] %}
 {% if div_name in div_rankings %}
@@ -201,7 +201,7 @@
     <thead>
       <tr>
         <th>#</th><th>Team</th>
-        <th>Total Score</th><th>Players</th>
+        <th>Quality Score</th><th>Players</th>
         <th>Avg PPG</th><th>Avg APG</th><th>Avg RPG</th>
         <th>Avg FG%</th><th>Top Player</th>
       </tr>
@@ -230,7 +230,7 @@
    VIEW: COMPARE TEAMS
    ════════════════════════════════════════════════════════ #}
 {% elif view == 'compare_teams' %}
-<p class="hint">Select two teams to compare all stats head-to-head. Winner = higher total player score.</p>
+<p class="hint">Select two teams to compare all stats head-to-head. Winner = higher quality score (minutes-weighted average).</p>
 <form method="GET" action="/teams" class="compare-form">
   <input type="hidden" name="view" value="compare_teams">
   <div class="form-group">
@@ -265,10 +265,10 @@
     <p>Both teams scored <strong>{{ "%.1f"|format(t1.Total_Score) }}</strong></p>
   {% elif winner == t1.Team %}
     <h3>&#127942; {{ t1.Team }} wins</h3>
-    <p>Total Score: <strong>{{ "%.1f"|format(t1.Total_Score) }}</strong> vs {{ "%.1f"|format(t2.Total_Score) }}</p>
+    <p>Quality Score: <strong>{{ "%.1f"|format(t1.Total_Score) }}</strong> vs {{ "%.1f"|format(t2.Total_Score) }}</p>
   {% else %}
     <h3>&#127942; {{ t2.Team }} wins</h3>
-    <p>Total Score: <strong>{{ "%.1f"|format(t2.Total_Score) }}</strong> vs {{ "%.1f"|format(t1.Total_Score) }}</p>
+    <p>Quality Score: <strong>{{ "%.1f"|format(t2.Total_Score) }}</strong> vs {{ "%.1f"|format(t1.Total_Score) }}</p>
   {% endif %}
 </div>
 
@@ -303,7 +303,7 @@
     {% endmacro %}
 
     <tr class="score-row">
-      <td><strong>Total Score</strong></td>
+      <td><strong>Quality Score</strong></td>
       <td class="{% if t1.Total_Score > t2.Total_Score %}stat-win{% elif t1.Total_Score < t2.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
         <strong>{{ "%.1f"|format(t1.Total_Score) }}</strong>
       </td>
@@ -529,7 +529,7 @@
     </tr>
     {% endmacro %}
     <tr class="score-row">
-      <td><strong>Total Score</strong></td>
+      <td><strong>Quality Score</strong></td>
       <td class="{% if d1.Total_Score > d2.Total_Score %}stat-win{% elif d1.Total_Score < d2.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
         <strong>{{ "%.1f"|format(d1.Total_Score) }}</strong>
       </td>
