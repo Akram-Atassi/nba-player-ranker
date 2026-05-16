@@ -4,10 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="976337bb-4b9b-4ea6-938c-28b4333e6418" name="Changes" comment="removed all-players brancg">
+    <list default="true" id="976337bb-4b9b-4ea6-938c-28b4333e6418" name="Changes" comment="Change Russ pos">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/compare.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/compare.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -188,7 +186,23 @@
       <option name="project" value="LOCAL" />
       <updated>1778859547186</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Adjusted team names system">
+      <option name="closed" value="true" />
+      <created>1778863577408</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1778863577408</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Change Russ pos">
+      <option name="closed" value="true" />
+      <created>1778863907325</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1778863907325</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -197,6 +211,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="removed all-players brancg" />
     <MESSAGE value="Added new branch" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added new branch" />
+    <MESSAGE value="Adjusted team names system" />
+    <MESSAGE value="Change Russ pos" />
+    <option name="LAST_COMMIT_MESSAGE" value="Change Russ pos" />
   </component>
 </project>

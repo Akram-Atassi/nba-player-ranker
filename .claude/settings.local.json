@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Test-Path *)",
+      "PowerShell(cd \"C:\\\\Users\\\\akram\\\\IdeaProjects\\\\nba-player-ranker\"; $env:PYTHONIOENCODING=\"utf-8\"; .\\\\venv\\\\Scripts\\\\python.exe data\\\\processor.py 2>&1 | Select-Object -First 30)",
+      "PowerShell(cd \"C:\\\\Users\\\\akram\\\\IdeaProjects\\\\nba-player-ranker\"; $env:PYTHONIOENCODING=\"utf-8\"; .\\\\venv\\\\Scripts\\\\python.exe -m data.processor 2>&1 | Select-Object -First 30)",
+      "PowerShell(cd \"C:\\\\Users\\\\akram\\\\IdeaProjects\\\\nba-player-ranker\"; $env:PYTHONIOENCODING=\"utf-8\"; .\\\\venv\\\\Scripts\\\\python.exe -m data.processor 2>&1 | Select-Object -First 35)",
+      "PowerShell(Remove-Item *)",
+      "Bash(Remove-Item -Force \"C:\\\\Users\\\\akram\\\\IdeaProjects\\\\nba-player-ranker\\\\data\\\\nba_stats.csv\" -ErrorAction SilentlyContinue)",
+      "Bash(Write-Output \"done\")"
+    ]
+  }
+}
