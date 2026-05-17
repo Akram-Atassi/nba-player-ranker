@@ -1,37 +1,586 @@
 {% extends "base.html" %}
-
 {% block title %}Teams - NBA Player Ranker{% endblock %}
 
 {% block content %}
-<h2>Team Rankings</h2>
-<p>Teams ranked by total player score (sum of all players)</p>
+<style>
+  /* ── Nav tabs ── */
+  .view-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
+  .view-tab { padding: 0.5rem 1.1rem; border-radius: 6px; border: 1px solid #ccc;
+               background: #f5f5f5; color: #333; text-decoration: none; font-size: 0.9rem; }
+  .view-tab:hover { background: #e0e0e0; }
+  .view-tab.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
 
-<div class="table-container">
-    <table class="teams-table">
-        <thead>
-        <tr>
-            <th>Rank</th>
-            <th>Team</th>
-            <th>Total Score</th>
-            <th>Num Players</th>
-            <th>Avg Points</th>
-            <th>Avg Assists</th>
-            <th>Avg Rebounds</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for team in teams %}
-        <tr>
-            <td>{{ team.Team_Rank }}</td>
-            <td><strong>{{ team.Team }}</strong></td>
-            <td class="score-cell">{{ "%.1f"|format(team.Total_Score) }}</td>
-            <td>{{ team.Num_Players }}</td>
-            <td>{{ "%.1f"|format(team.Avg_Points) }}</td>
-            <td>{{ "%.1f"|format(team.Avg_Assists) }}</td>
-            <td>{{ "%.1f"|format(team.Avg_Rebounds) }}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+  /* ── Generic table ── */
+  .teams-table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+  .teams-table th { background: #222; color: #fff; padding: 0.6rem 0.9rem;
+                    text-align: left; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .teams-table td { padding: 0.55rem 0.9rem; border-bottom: 1px solid #eee; }
+  .teams-table tr:nth-child(even) { background: #f9f9f9; }
+  .teams-table tr:hover { background: #f0f4ff; }
+  .rank-cell { font-weight: 700; color: #1a73e8; width: 40px; }
+  .score-cell { font-weight: 600; color: #2e7d32; }
+  .team-code { font-weight: 700; }
+  .conf-badge { font-size: 0.75rem; padding: 0.15rem 0.45rem; border-radius: 4px;
+                color: #fff; margin-left: 0.4rem; }
+  .badge-east { background: #1565c0; }
+  .badge-west { background: #b71c1c; }
+
+  /* ── Section headers for conference/division splits ── */
+  .section-header { background: #333; color: #fff; padding: 0.7rem 1rem;
+                    border-radius: 6px 6px 0 0; margin-top: 1.5rem; font-size: 1rem; font-weight: 600; }
+  .section-header.east { background: #1565c0; }
+  .section-header.west { background: #b71c1c; }
+  .section-header.div { background: #4a4a4a; }
+  .section-table-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px;
+                        overflow: hidden; margin-bottom: 1.5rem; }
+
+  /* ── Compare forms ── */
+  .compare-form { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; margin-bottom: 2rem; }
+  .compare-form .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+  .compare-form label { font-weight: 600; font-size: 0.9rem; }
+  .compare-form select, .compare-form input { padding: 0.5rem 0.75rem; border: 1px solid #ccc;
+    border-radius: 6px; font-size: 1rem; min-width: 180px; }
+  .btn-primary { padding: 0.55rem 1.4rem; background: #1a73e8; color: #fff; border: none;
+                 border-radius: 6px; font-size: 1rem; cursor: pointer; }
+  .btn-primary:hover { background: #1558b0; }
+
+  /* ── Winner banner ── */
+  .winner-banner { border-radius: 10px; padding: 1.2rem 2rem; margin-bottom: 1.8rem; text-align: center; }
+  .winner-banner.team1-wins { background: linear-gradient(135deg,#e8f5e9,#c8e6c9); border: 2px solid #4caf50; }
+  .winner-banner.team2-wins { background: linear-gradient(135deg,#e3f2fd,#bbdefb); border: 2px solid #2196f3; }
+  .winner-banner.east-wins  { background: linear-gradient(135deg,#e3f2fd,#bbdefb); border: 2px solid #1565c0; }
+  .winner-banner.west-wins  { background: linear-gradient(135deg,#fce4ec,#f8bbd0); border: 2px solid #b71c1c; }
+  .winner-banner.tie        { background: linear-gradient(135deg,#fff8e1,#ffecb3); border: 2px solid #ffc107; }
+  .winner-banner h3 { margin: 0 0 0.3rem; font-size: 1.5rem; }
+  .winner-banner p  { margin: 0; color: #444; }
+
+  /* ── Head-to-head comparison table ── */
+  .h2h-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  .h2h-table th { padding: 0.7rem 1rem; text-align: center; background: #333; color: #fff; }
+  .h2h-table th:first-child { text-align: left; }
+  .h2h-table td { padding: 0.55rem 1rem; text-align: center; border-bottom: 1px solid #eee; }
+  .h2h-table td:first-child { text-align: left; font-weight: 500; color: #555; }
+  .h2h-table tr:nth-child(even) { background: #f9f9f9; }
+  .h2h-table tr:hover { background: #f0f4ff; }
+  .stat-win  { font-weight: 700; color: #2e7d32; }
+  .stat-loss { color: #aaa; }
+  .stat-tie  { color: #555; }
+  .score-row td { font-size: 1.05rem; }
+
+  /* ── Conf compare two-column ── */
+  .conf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media(max-width:700px){ .conf-grid { grid-template-columns: 1fr; } }
+  .conf-card { border: 2px solid #ddd; border-radius: 8px; overflow: hidden; }
+  .conf-card-header { padding: 0.7rem 1rem; font-weight: 700; color: #fff; font-size: 1rem; }
+  .conf-card-header.east { background: #1565c0; }
+  .conf-card-header.west { background: #b71c1c; }
+  .conf-card-body { padding: 1rem; }
+  .stat-row { display: flex; justify-content: space-between; padding: 0.3rem 0;
+              border-bottom: 1px solid #f0f0f0; font-size: 0.92rem; }
+  .stat-label { color: #666; }
+  .stat-val { font-weight: 600; }
+  .stat-val.winner { color: #2e7d32; }
+
+  .error-msg { color: #c62828; margin: 1rem 0; }
+  .hint { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
+</style>
+
+<h2>Teams</h2>
+
+{# ── View tabs ── #}
+<div class="view-tabs">
+  <a href="/teams?view=all"
+     class="view-tab {% if view == 'all' %}active{% endif %}">All Teams</a>
+  <a href="/teams?view=conference"
+     class="view-tab {% if view == 'conference' %}active{% endif %}">By Conference</a>
+  <a href="/teams?view=division"
+     class="view-tab {% if view == 'division' %}active{% endif %}">By Division</a>
+  <a href="/teams?view=compare_teams"
+     class="view-tab {% if view == 'compare_teams' %}active{% endif %}">Compare Teams</a>
+  <a href="/teams?view=compare_conferences"
+     class="view-tab {% if view == 'compare_conferences' %}active{% endif %}">Compare Conferences</a>
+  <a href="/teams?view=compare_divisions"
+     class="view-tab {% if view == 'compare_divisions' %}active{% endif %}">Compare Divisions</a>
+  <a href="/playoffs"
+     class="view-tab">Playoff Bracket</a>
 </div>
+
+{# ════════════════════════════════════════════════════════
+   VIEW: ALL TEAMS
+   ════════════════════════════════════════════════════════ #}
+{% if view == 'all' %}
+<p class="hint">All 30 teams ranked by quality score — a minutes-weighted average of player scores that rewards elite starters over deep benches.</p>
+<div class="table-container">
+  <table class="teams-table">
+    <thead>
+      <tr>
+        <th>Rank</th><th>Team</th><th>Conference</th><th>Division</th>
+        <th>Quality Score</th><th>Players</th>
+        <th>Avg PPG</th><th>Avg APG</th><th>Avg RPG</th>
+        <th>Avg FG%</th><th>Top Player</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for team in all_teams %}
+      <tr>
+        <td class="rank-cell">{{ team.Team_Rank }}</td>
+        <td class="team-code">{{ team.Team }}</td>
+        <td>
+          <span class="conf-badge {% if team.Conference == 'East' %}badge-east{% else %}badge-west{% endif %}">
+            {{ team.Conference }}
+          </span>
+        </td>
+        <td>{{ team.Division }}</td>
+        <td class="score-cell">{{ "%.1f"|format(team.Total_Score) }}</td>
+        <td>{{ team.Num_Players }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Points) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Assists) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Rebounds) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_FG) }}%</td>
+        <td>{{ team.Top_Player }} <small style="color:#888;">({{ team.Top_Player_Score }})</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# ════════════════════════════════════════════════════════
+   VIEW: BY CONFERENCE
+   ════════════════════════════════════════════════════════ #}
+{% elif view == 'conference' %}
+<p class="hint">Teams ranked within each conference by quality score (minutes-weighted average).</p>
+
+{% for conf_name, conf_teams in [('East', conf_rankings.East), ('West', conf_rankings.West)] %}
+<div class="section-header {{ conf_name | lower }}">
+  {{ conf_name }}ern Conference &mdash; {{ conf_teams | length }} teams
+</div>
+<div class="section-table-wrap">
+  <table class="teams-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Team</th><th>Division</th>
+        <th>Quality Score</th><th>Players</th>
+        <th>Avg PPG</th><th>Avg APG</th><th>Avg RPG</th>
+        <th>Avg FG%</th><th>Top Player</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for team in conf_teams %}
+      <tr>
+        <td class="rank-cell">{{ team.Conf_Rank }}</td>
+        <td class="team-code">{{ team.Team }}</td>
+        <td>{{ team.Division }}</td>
+        <td class="score-cell">{{ "%.1f"|format(team.Total_Score) }}</td>
+        <td>{{ team.Num_Players }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Points) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Assists) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Rebounds) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_FG) }}%</td>
+        <td>{{ team.Top_Player }} <small style="color:#888;">({{ team.Top_Player_Score }})</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+
+{# ════════════════════════════════════════════════════════
+   VIEW: BY DIVISION
+   ════════════════════════════════════════════════════════ #}
+{% elif view == 'division' %}
+<p class="hint">Teams ranked within each division by quality score (minutes-weighted average).</p>
+
+{% for div_name in ['Atlantic','Central','Southeast','Northwest','Pacific','Southwest'] %}
+{% if div_name in div_rankings %}
+{% set div_teams = div_rankings[div_name] %}
+<div class="section-header div">
+  {{ div_teams[0].Conference if div_teams else '' }} &rsaquo; {{ div_name }} Division
+</div>
+<div class="section-table-wrap">
+  <table class="teams-table">
+    <thead>
+      <tr>
+        <th>#</th><th>Team</th>
+        <th>Quality Score</th><th>Players</th>
+        <th>Avg PPG</th><th>Avg APG</th><th>Avg RPG</th>
+        <th>Avg FG%</th><th>Top Player</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for team in div_teams %}
+      <tr>
+        <td class="rank-cell">{{ team.Div_Rank }}</td>
+        <td class="team-code">{{ team.Team }}</td>
+        <td class="score-cell">{{ "%.1f"|format(team.Total_Score) }}</td>
+        <td>{{ team.Num_Players }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Points) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Assists) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_Rebounds) }}</td>
+        <td>{{ "%.1f"|format(team.Avg_FG) }}%</td>
+        <td>{{ team.Top_Player }} <small style="color:#888;">({{ team.Top_Player_Score }})</small></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endfor %}
+
+{# ════════════════════════════════════════════════════════
+   VIEW: COMPARE TEAMS
+   ════════════════════════════════════════════════════════ #}
+{% elif view == 'compare_teams' %}
+<p class="hint">Select two teams to compare all stats head-to-head. Winner = higher quality score (minutes-weighted average).</p>
+<form method="GET" action="/teams" class="compare-form">
+  <input type="hidden" name="view" value="compare_teams">
+  <div class="form-group">
+    <label>Team 1</label>
+    <select name="team1">
+      <option value="">-- Select --</option>
+      {% for code in all_team_codes %}
+      <option value="{{ code }}" {% if selected_team1 == code %}selected{% endif %}>{{ code }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Team 2</label>
+    <select name="team2">
+      <option value="">-- Select --</option>
+      {% for code in all_team_codes %}
+      <option value="{{ code }}" {% if selected_team2 == code %}selected{% endif %}>{{ code }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn-primary">Compare</button>
+</form>
+
+{% if comparison %}
+{% set t1 = comparison.team1 %}
+{% set t2 = comparison.team2 %}
+{% set winner = comparison.winner %}
+
+<div class="winner-banner {% if winner == t1.Team %}team1-wins{% elif winner == t2.Team %}team2-wins{% else %}tie{% endif %}">
+  {% if winner == 'tie' %}
+    <h3>It's a Tie</h3>
+    <p>Both teams scored <strong>{{ "%.1f"|format(t1.Total_Score) }}</strong></p>
+  {% elif winner == t1.Team %}
+    <h3>&#127942; {{ t1.Team }} wins</h3>
+    <p>Quality Score: <strong>{{ "%.1f"|format(t1.Total_Score) }}</strong> vs {{ "%.1f"|format(t2.Total_Score) }}</p>
+  {% else %}
+    <h3>&#127942; {{ t2.Team }} wins</h3>
+    <p>Quality Score: <strong>{{ "%.1f"|format(t2.Total_Score) }}</strong> vs {{ "%.1f"|format(t1.Total_Score) }}</p>
+  {% endif %}
+</div>
+
+<table class="h2h-table">
+  <thead>
+    <tr>
+      <th>Stat</th>
+      <th>{{ t1.Team }}{% if winner == t1.Team %} &#127942;{% endif %}</th>
+      <th>{{ t2.Team }}{% if winner == t2.Team %} &#127942;{% endif %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% macro row(label, v1, v2, fmt="%s", higher_wins=true) %}
+    {% set v1f = v1|float %}
+    {% set v2f = v2|float %}
+    {% if higher_wins %}
+      {% set w1 = v1f > v2f %}
+      {% set w2 = v2f > v1f %}
+    {% else %}
+      {% set w1 = v1f < v2f %}
+      {% set w2 = v2f < v1f %}
+    {% endif %}
+    <tr>
+      <td>{{ label }}</td>
+      <td class="{% if w1 %}stat-win{% elif w2 %}stat-loss{% else %}stat-tie{% endif %}">
+        {{ "%.1f"|format(v1f) if '.' in fmt else v1 }}
+      </td>
+      <td class="{% if w2 %}stat-win{% elif w1 %}stat-loss{% else %}stat-tie{% endif %}">
+        {{ "%.1f"|format(v2f) if '.' in fmt else v2 }}
+      </td>
+    </tr>
+    {% endmacro %}
+
+    <tr class="score-row">
+      <td><strong>Quality Score</strong></td>
+      <td class="{% if t1.Total_Score > t2.Total_Score %}stat-win{% elif t1.Total_Score < t2.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
+        <strong>{{ "%.1f"|format(t1.Total_Score) }}</strong>
+      </td>
+      <td class="{% if t2.Total_Score > t1.Total_Score %}stat-win{% elif t2.Total_Score < t1.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
+        <strong>{{ "%.1f"|format(t2.Total_Score) }}</strong>
+      </td>
+    </tr>
+    {{ row("Avg Points/Game",   t1.Avg_Points,   t2.Avg_Points,   "%.1f") }}
+    {{ row("Avg Assists/Game",  t1.Avg_Assists,  t2.Avg_Assists,  "%.1f") }}
+    {{ row("Avg Rebounds/Game", t1.Avg_Rebounds, t2.Avg_Rebounds, "%.1f") }}
+    {{ row("Avg Steals/Game",   t1.Avg_Steals,   t2.Avg_Steals,   "%.2f") }}
+    {{ row("Avg Blocks/Game",   t1.Avg_Blocks,   t2.Avg_Blocks,   "%.2f") }}
+    {{ row("Avg FG%",           t1.Avg_FG,       t2.Avg_FG,       "%.1f") }}
+    {{ row("Avg 3P%",           t1.Avg_3P,       t2.Avg_3P,       "%.1f") }}
+    {{ row("Avg FT%",           t1.Avg_FT,       t2.Avg_FT,       "%.1f") }}
+    {{ row("Avg Minutes/Game",  t1.Avg_Minutes,  t2.Avg_Minutes,  "%.1f") }}
+    <tr>
+      <td>Roster Size</td>
+      <td>{{ t1.Num_Players }}</td>
+      <td>{{ t2.Num_Players }}</td>
+    </tr>
+    <tr>
+      <td>Top Player</td>
+      <td>{{ t1.Top_Player }} ({{ t1.Top_Player_Score }})</td>
+      <td>{{ t2.Top_Player }} ({{ t2.Top_Player_Score }})</td>
+    </tr>
+    <tr>
+      <td>Conference</td>
+      <td>{{ t1.Conference }}</td>
+      <td>{{ t2.Conference }}</td>
+    </tr>
+    <tr>
+      <td>Division</td>
+      <td>{{ t1.Division }}</td>
+      <td>{{ t2.Division }}</td>
+    </tr>
+  </tbody>
+</table>
+
+{% elif selected_team1 and selected_team2 %}
+<p class="error-msg">One or both teams not found.</p>
+{% endif %}
+
+{# ════════════════════════════════════════════════════════
+   VIEW: COMPARE CONFERENCES
+   ════════════════════════════════════════════════════════ #}
+{% elif view == 'compare_conferences' %}
+{% set cd = conf_data %}
+{% set e = cd.east %}
+{% set w = cd.west %}
+{% set winner = cd.winner %}
+
+<p class="hint">East vs West — aggregated total score across all teams in each conference.</p>
+
+<div class="winner-banner {% if winner == 'East' %}east-wins{% elif winner == 'West' %}west-wins{% else %}tie{% endif %}">
+  {% if winner == 'tie' %}
+    <h3>It's a Tie</h3>
+  {% elif winner == 'East' %}
+    <h3>&#127942; Eastern Conference wins</h3>
+    <p>Total Score: <strong>{{ "%.1f"|format(e.Total_Score) }}</strong> vs {{ "%.1f"|format(w.Total_Score) }}</p>
+  {% else %}
+    <h3>&#127942; Western Conference wins</h3>
+    <p>Total Score: <strong>{{ "%.1f"|format(w.Total_Score) }}</strong> vs {{ "%.1f"|format(e.Total_Score) }}</p>
+  {% endif %}
+</div>
+
+<table class="h2h-table">
+  <thead>
+    <tr>
+      <th>Stat</th>
+      <th style="color:#90caf9;">East{% if winner == 'East' %} &#127942;{% endif %}</th>
+      <th style="color:#ef9a9a;">West{% if winner == 'West' %} &#127942;{% endif %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% macro crow(label, v1, v2) %}
+    {% set v1f = v1|float %}
+    {% set v2f = v2|float %}
+    <tr>
+      <td>{{ label }}</td>
+      <td class="{% if v1f > v2f %}stat-win{% elif v1f < v2f %}stat-loss{% else %}stat-tie{% endif %}">
+        {{ "%.1f"|format(v1f) }}
+      </td>
+      <td class="{% if v2f > v1f %}stat-win{% elif v2f < v1f %}stat-loss{% else %}stat-tie{% endif %}">
+        {{ "%.1f"|format(v2f) }}
+      </td>
+    </tr>
+    {% endmacro %}
+    <tr class="score-row">
+      <td><strong>Total Score (all teams)</strong></td>
+      <td class="{% if e.Total_Score > w.Total_Score %}stat-win{% elif e.Total_Score < w.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
+        <strong>{{ "%.1f"|format(e.Total_Score) }}</strong>
+      </td>
+      <td class="{% if w.Total_Score > e.Total_Score %}stat-win{% elif w.Total_Score < e.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
+        <strong>{{ "%.1f"|format(w.Total_Score) }}</strong>
+      </td>
+    </tr>
+    {{ crow("Avg PPG (per team)",      e.Avg_Points,   w.Avg_Points) }}
+    {{ crow("Avg APG (per team)",      e.Avg_Assists,  w.Avg_Assists) }}
+    {{ crow("Avg RPG (per team)",      e.Avg_Rebounds, w.Avg_Rebounds) }}
+    {{ crow("Avg SPG (per team)",      e.Avg_Steals,   w.Avg_Steals) }}
+    {{ crow("Avg BPG (per team)",      e.Avg_Blocks,   w.Avg_Blocks) }}
+    {{ crow("Avg FG% (per team)",      e.Avg_FG,       w.Avg_FG) }}
+    {{ crow("Avg 3P% (per team)",      e.Avg_3P,       w.Avg_3P) }}
+    <tr>
+      <td>Top Team</td>
+      <td>{{ e.Top_Team }} ({{ "%.1f"|format(e.Top_Team_Score) }})</td>
+      <td>{{ w.Top_Team }} ({{ "%.1f"|format(w.Top_Team_Score) }})</td>
+    </tr>
+    <tr>
+      <td>Teams</td>
+      <td>{{ e.Num_Teams }}</td>
+      <td>{{ w.Num_Teams }}</td>
+    </tr>
+  </tbody>
+</table>
+
+{# Per-conference team lists #}
+<div style="margin-top:2rem;">
+  <div class="conf-grid">
+    <div>
+      <div class="section-header east">Eastern Conference Teams</div>
+      <div class="section-table-wrap">
+        <table class="teams-table">
+          <thead><tr><th>#</th><th>Team</th><th>Score</th></tr></thead>
+          <tbody>
+            {% for t in cd.east_teams %}
+            <tr>
+              <td class="rank-cell">{{ t.Conf_Rank }}</td>
+              <td class="team-code">{{ t.Team }}</td>
+              <td class="score-cell">{{ "%.1f"|format(t.Total_Score) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="section-header west">Western Conference Teams</div>
+      <div class="section-table-wrap">
+        <table class="teams-table">
+          <thead><tr><th>#</th><th>Team</th><th>Score</th></tr></thead>
+          <tbody>
+            {% for t in cd.west_teams %}
+            <tr>
+              <td class="rank-cell">{{ t.Conf_Rank }}</td>
+              <td class="team-code">{{ t.Team }}</td>
+              <td class="score-cell">{{ "%.1f"|format(t.Total_Score) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ════════════════════════════════════════════════════════
+   VIEW: COMPARE DIVISIONS
+   ════════════════════════════════════════════════════════ #}
+{% elif view == 'compare_divisions' %}
+<p class="hint">Select two divisions to compare. Winner = division with higher combined team score.</p>
+<form method="GET" action="/teams" class="compare-form">
+  <input type="hidden" name="view" value="compare_divisions">
+  <div class="form-group">
+    <label>Division 1</label>
+    <select name="div1">
+      <option value="">-- Select --</option>
+      {% for d in divisions %}
+      <option value="{{ d }}" {% if selected_div1 == d %}selected{% endif %}>{{ d }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Division 2</label>
+    <select name="div2">
+      <option value="">-- Select --</option>
+      {% for d in divisions %}
+      <option value="{{ d }}" {% if selected_div2 == d %}selected{% endif %}>{{ d }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit" class="btn-primary">Compare</button>
+</form>
+
+{% if div_comparison %}
+{% set d1 = div_comparison.div1 %}
+{% set d2 = div_comparison.div2 %}
+{% set winner = div_comparison.winner %}
+
+<div class="winner-banner {% if winner == d1.Division %}team1-wins{% elif winner == d2.Division %}team2-wins{% else %}tie{% endif %}">
+  {% if winner == 'tie' %}
+    <h3>It's a Tie</h3>
+  {% elif winner == d1.Division %}
+    <h3>&#127942; {{ d1.Division }} Division wins</h3>
+    <p>Total Score: <strong>{{ "%.1f"|format(d1.Total_Score) }}</strong> vs {{ "%.1f"|format(d2.Total_Score) }}</p>
+  {% else %}
+    <h3>&#127942; {{ d2.Division }} Division wins</h3>
+    <p>Total Score: <strong>{{ "%.1f"|format(d2.Total_Score) }}</strong> vs {{ "%.1f"|format(d1.Total_Score) }}</p>
+  {% endif %}
+</div>
+
+<table class="h2h-table">
+  <thead>
+    <tr>
+      <th>Stat</th>
+      <th>{{ d1.Division }} ({{ d1.Conference }}){% if winner == d1.Division %} &#127942;{% endif %}</th>
+      <th>{{ d2.Division }} ({{ d2.Conference }}){% if winner == d2.Division %} &#127942;{% endif %}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% macro drow(label, v1, v2) %}
+    {% set v1f = v1|float %}
+    {% set v2f = v2|float %}
+    <tr>
+      <td>{{ label }}</td>
+      <td class="{% if v1f > v2f %}stat-win{% elif v1f < v2f %}stat-loss{% else %}stat-tie{% endif %}">
+        {{ "%.1f"|format(v1f) }}
+      </td>
+      <td class="{% if v2f > v1f %}stat-win{% elif v2f < v1f %}stat-loss{% else %}stat-tie{% endif %}">
+        {{ "%.1f"|format(v2f) }}
+      </td>
+    </tr>
+    {% endmacro %}
+    <tr class="score-row">
+      <td><strong>Quality Score</strong></td>
+      <td class="{% if d1.Total_Score > d2.Total_Score %}stat-win{% elif d1.Total_Score < d2.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
+        <strong>{{ "%.1f"|format(d1.Total_Score) }}</strong>
+      </td>
+      <td class="{% if d2.Total_Score > d1.Total_Score %}stat-win{% elif d2.Total_Score < d1.Total_Score %}stat-loss{% else %}stat-tie{% endif %}">
+        <strong>{{ "%.1f"|format(d2.Total_Score) }}</strong>
+      </td>
+    </tr>
+    {{ drow("Avg PPG (per team)",  d1.Avg_Points,   d2.Avg_Points) }}
+    {{ drow("Avg APG (per team)",  d1.Avg_Assists,  d2.Avg_Assists) }}
+    {{ drow("Avg RPG (per team)",  d1.Avg_Rebounds, d2.Avg_Rebounds) }}
+    {{ drow("Avg SPG (per team)",  d1.Avg_Steals,   d2.Avg_Steals) }}
+    {{ drow("Avg BPG (per team)",  d1.Avg_Blocks,   d2.Avg_Blocks) }}
+    {{ drow("Avg FG% (per team)",  d1.Avg_FG,       d2.Avg_FG) }}
+    {{ drow("Avg 3P% (per team)",  d1.Avg_3P,       d2.Avg_3P) }}
+    <tr>
+      <td>Top Team</td>
+      <td>{{ d1.Top_Team }} ({{ "%.1f"|format(d1.Top_Team_Score) }})</td>
+      <td>{{ d2.Top_Team }} ({{ "%.1f"|format(d2.Top_Team_Score) }})</td>
+    </tr>
+    <tr><td>Teams</td><td>{{ d1.Num_Teams }}</td><td>{{ d2.Num_Teams }}</td></tr>
+  </tbody>
+</table>
+
+{# Side-by-side team lists #}
+<div style="margin-top:2rem;">
+  <div class="conf-grid">
+    {% for div_label, div_teams in [(d1.Division, div_comparison.div1_teams), (d2.Division, div_comparison.div2_teams)] %}
+    <div>
+      <div class="section-header div">{{ div_label }} Division Teams</div>
+      <div class="section-table-wrap">
+        <table class="teams-table">
+          <thead><tr><th>#</th><th>Team</th><th>Score</th></tr></thead>
+          <tbody>
+            {% for t in div_teams %}
+            <tr>
+              <td class="rank-cell">{{ loop.index }}</td>
+              <td class="team-code">{{ t.Team }}</td>
+              <td class="score-cell">{{ "%.1f"|format(t.Total_Score) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% elif selected_div1 and selected_div2 %}
+<p class="error-msg">One or both divisions not found.</p>
+{% endif %}
+
+{% endif %}
 {% endblock %}

@@ -11,7 +11,12 @@ from data.processor import (
     get_player_by_name,
     search_players
 )
-from models.scoring import filter_players, get_team_rankings, compare_players
+from models.scoring import (
+    filter_players, get_team_rankings, compare_players,
+    compare_teams, get_conference_rankings, compare_conferences,
+    get_division_rankings, compare_divisions, get_playoff_bracket,
+    DIVISIONS, CONFERENCES,
+)
 
 app = Flask(__name__)
 
@@ -75,9 +80,56 @@ def player_detail(player_name):
 
 @app.route('/teams')
 def teams():
-    """Team rankings page"""
+    """Teams hub - rankings, comparisons, conference/division views"""
+    view = request.args.get('view', 'all')
+    team1 = request.args.get('team1', '').upper()
+    team2 = request.args.get('team2', '').upper()
+    div1 = request.args.get('div1', '')
+    div2 = request.args.get('div2', '')
+
     team_rankings = get_team_rankings(PLAYERS)
-    return render_template('team_compare.html', teams=team_rankings)
+    all_team_codes = sorted(t['Team'] for t in team_rankings)
+
+    ctx = {
+        'view': view,
+        'all_teams': team_rankings,
+        'all_team_codes': all_team_codes,
+        'divisions': DIVISIONS,
+        'conferences': CONFERENCES,
+        'selected_team1': team1,
+        'selected_team2': team2,
+        'selected_div1': div1,
+        'selected_div2': div2,
+        'comparison': None,
+        'conf_data': None,
+        'div_comparison': None,
+        'conf_rankings': None,
+        'div_rankings': None,
+    }
+
+    if view == 'conference':
+        ctx['conf_rankings'] = get_conference_rankings(PLAYERS)
+
+    elif view == 'division':
+        ctx['div_rankings'] = get_division_rankings(PLAYERS)
+
+    elif view == 'compare_teams' and team1 and team2:
+        ctx['comparison'] = compare_teams(PLAYERS, team1, team2)
+
+    elif view == 'compare_conferences':
+        ctx['conf_data'] = compare_conferences(PLAYERS)
+
+    elif view == 'compare_divisions' and div1 and div2:
+        ctx['div_comparison'] = compare_divisions(PLAYERS, div1, div2)
+
+    return render_template('teams.html', **ctx)
+
+
+@app.route('/playoffs')
+def playoffs():
+    """Playoff bracket prediction page"""
+    bracket = get_playoff_bracket(PLAYERS)
+    return render_template('playoffs.html', bracket=bracket)
 
 
 @app.route('/compare')
@@ -167,18 +219,41 @@ def api_compare():
 def api_teams():
     """API endpoint for team rankings (JSON)"""
     team_rankings = get_team_rankings(PLAYERS)
+    return jsonify({'count': len(team_rankings), 'teams': team_rankings})
 
-    return jsonify({
-        'count': len(team_rankings),
-        'teams': [
-            {
-                'team': t[0],
-                'score': t[1],
-                'player_count': t[2]
-            }
-            for t in team_rankings
-        ]
-    })
+
+@app.route('/api/teams/compare')
+def api_teams_compare():
+    team1 = request.args.get('team1', '').upper()
+    team2 = request.args.get('team2', '').upper()
+    if not team1 or not team2:
+        return jsonify({'error': 'Both team1 and team2 required'}), 400
+    result = compare_teams(PLAYERS, team1, team2)
+    if not result:
+        return jsonify({'error': 'One or both teams not found'}), 404
+    return jsonify(result)
+
+
+@app.route('/api/conferences')
+def api_conferences():
+    return jsonify(compare_conferences(PLAYERS))
+
+
+@app.route('/api/divisions')
+def api_divisions():
+    div1 = request.args.get('div1', '')
+    div2 = request.args.get('div2', '')
+    if div1 and div2:
+        result = compare_divisions(PLAYERS, div1, div2)
+        if not result:
+            return jsonify({'error': 'One or both divisions not found'}), 404
+        return jsonify(result)
+    return jsonify(get_division_rankings(PLAYERS))
+
+
+@app.route('/api/playoffs')
+def api_playoffs():
+    return jsonify(get_playoff_bracket(PLAYERS))
 
 
 @app.route('/api/metadata')

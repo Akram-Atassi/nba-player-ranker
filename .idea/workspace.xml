@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="976337bb-4b9b-4ea6-938c-28b4333e6418" name="Changes" comment="Change Russ pos">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="976337bb-4b9b-4ea6-938c-28b4333e6418" name="Changes" comment="First try for teams fix patch">
+      <change beforePath="$PROJECT_DIR$/data/fetcher.py" beforeDir="false" afterPath="$PROJECT_DIR$/data/fetcher.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data/nba_stats.csv" beforeDir="false" afterPath="$PROJECT_DIR$/data/nba_stats.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/models/scoring.py" beforeDir="false" afterPath="$PROJECT_DIR$/models/scoring.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/teams.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/teams.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +47,65 @@
     <commands />
     <urls />
   </component>
+  <component name="NextEditCompletionFeaturesState">
+    <decayedCancelled>
+      <entry key="MS100" value="1.009905906803397" />
+      <entry key="MS500" value="1.891335116316044" />
+      <entry key="S2" value="5.16534868261909" />
+      <entry key="S5" value="7.772003853808679" />
+      <entry key="S10" value="9.169369926281135" />
+      <entry key="S30" value="10.33258247078003" />
+      <entry key="S60" value="10.658858112952725" />
+      <entry key="M2" value="10.910993187397052" />
+      <entry key="M5" value="13.201462860322293" />
+      <entry key="M10" value="17.855305617263877" />
+      <entry key="M15" value="20.961658079633605" />
+      <entry key="M30" value="25.46526419694225" />
+      <entry key="H1" value="28.429147454651197" />
+      <entry key="H2" value="30.131437877832006" />
+      <entry key="H4" value="31.043950524896395" />
+      <entry key="D1" value="31.8375476559423" />
+      <entry key="W1" value="31.97671517428843" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="0.0" />
+      <entry key="M15" value="0.0" />
+      <entry key="M30" value="0.0" />
+      <entry key="H1" value="0.0" />
+      <entry key="H2" value="0.0" />
+      <entry key="H4" value="0.0" />
+      <entry key="D1" value="0.0" />
+      <entry key="W1" value="0.0" />
+    </decayedSelected>
+    <decayedShown>
+      <entry key="MS100" value="0.975182767694311" />
+      <entry key="MS500" value="1.8504524011996086" />
+      <entry key="S2" value="5.1278055365858535" />
+      <entry key="S5" value="7.750638817808239" />
+      <entry key="S10" value="9.157149108412067" />
+      <entry key="S30" value="10.328098970279529" />
+      <entry key="S60" value="10.656559979404598" />
+      <entry key="M2" value="10.909824817629339" />
+      <entry key="M5" value="13.200939044252067" />
+      <entry key="M10" value="17.854986077237584" />
+      <entry key="M15" value="20.961419236850663" />
+      <entry key="M30" value="25.4651259861164" />
+      <entry key="H1" value="28.429072148201907" />
+      <entry key="H2" value="30.13139844116808" />
+      <entry key="H4" value="31.04393032819683" />
+      <entry key="D1" value="31.83754422045541" />
+      <entry key="W1" value="31.976714681766314" />
+    </decayedShown>
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1,
   &quot;fromUser&quot;: false
@@ -64,9 +126,10 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "main",
+    "git-widget-placeholder": "Fix-Teams-Branch",
     "git.auto.fetch.suggestion.counter": "2",
     "junie.onboarding.icon.badge.shown": "true",
     "kotlin-language-version-configured": "true",
@@ -84,6 +147,12 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\akram\IdeaProjects\nba-player-ranker" />
+      <recent name="C:\Users\akram\IdeaProjects\nba-player-ranker\.idea\.GitIgnore" />
+    </key>
+  </component>
   <component name="RunManager">
     <configuration default="true" type="JetRunConfigurationType">
       <module name="nba-player-ranker" />
@@ -120,44 +189,14 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration default="true" type="tests" factoryName="Autodetect">
-      <module name="nba-player-ranker" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="DEBUG_JUST_MY_CODE" value="false" />
-      <option name="RUN_TOOL" value="" />
-      <option name="_new_additionalArguments" value="&quot;&quot;" />
-      <option name="_new_target" value="&quot;&quot;" />
-      <option name="_new_targetType" value="&quot;PATH&quot;" />
-      <method v="2" />
-    </configuration>
-    <configuration default="true" type="tests" factoryName="Doctests">
-      <module name="nba-player-ranker" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="DEBUG_JUST_MY_CODE" value="false" />
-      <option name="RUN_TOOL" value="" />
-      <option name="SCRIPT_NAME" value="" />
-      <option name="CLASS_NAME" value="" />
-      <option name="METHOD_NAME" value="" />
-      <option name="FOLDER_NAME" value="" />
-      <option name="TEST_TYPE" value="TEST_SCRIPT" />
-      <option name="PATTERN" value="" />
-      <option name="USE_PATTERN" value="false" />
-      <method v="2" />
-    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-37e91769500f-intellij.indexing.shared.core-IU-261.24374.151" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-IU-261.24374.151" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -169,6 +208,7 @@
       <workItem from="1778761070581" duration="4401000" />
       <workItem from="1778838358689" duration="166000" />
       <workItem from="1778838573866" duration="715000" />
+      <workItem from="1778916953757" duration="5642000" />
     </task>
     <task id="LOCAL-00001" summary="removed all-players brancg">
       <option name="closed" value="true" />
@@ -202,7 +242,39 @@
       <option name="project" value="LOCAL" />
       <updated>1778863907325</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="N/A">
+      <option name="closed" value="true" />
+      <created>1778912507368</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1778912507368</updated>
+    </task>
+    <task id="LOCAL-00006" summary="N/A">
+      <option name="closed" value="true" />
+      <created>1778912608662</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1778912608662</updated>
+    </task>
+    <task id="LOCAL-00007" summary="N/A">
+      <option name="closed" value="true" />
+      <created>1778912680405</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1778912680405</updated>
+    </task>
+    <task id="LOCAL-00008" summary="First try for teams fix patch">
+      <option name="closed" value="true" />
+      <created>1778918052500</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1778918052500</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -213,6 +285,8 @@
     <MESSAGE value="Added new branch" />
     <MESSAGE value="Adjusted team names system" />
     <MESSAGE value="Change Russ pos" />
-    <option name="LAST_COMMIT_MESSAGE" value="Change Russ pos" />
+    <MESSAGE value="N/A" />
+    <MESSAGE value="First try for teams fix patch" />
+    <option name="LAST_COMMIT_MESSAGE" value="First try for teams fix patch" />
   </component>
 </project>
